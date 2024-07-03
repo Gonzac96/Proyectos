@@ -54,6 +54,7 @@ class VentanaImpuestos(QWidget):
                 spin_box.setRange(0, 100000)
                 spin_box.setDecimals(2)
                 spin_box.setPrefix("$")
+                spin_box.valueChanged.connect(self.guardar_valor)
 
                 self.labels[f'{nafta}_{impuesto}'] = label
                 self.spin_boxes[f'{nafta}_{impuesto}'] = spin_box
@@ -102,6 +103,19 @@ class VentanaImpuestos(QWidget):
         else:
             for spin_box in self.spin_boxes.values():
                 spin_box.setValue(0)
+    
+    def guardar_valor(self):
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        valores = [self.spin_boxes[key].value() for key in self.spin_boxes.keys()]
+        valores.insert(0, 1)  # Insertar el ID = 1
+        cursor.execute('''
+            REPLACE INTO impuestos (id, gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', valores)
+        conn.commit()
+        conn.close()
 
 class VentanaFacturas(QWidget):
     def __init__(self):
@@ -110,7 +124,7 @@ class VentanaFacturas(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Tipo de Factura')
-        self.setGeometry(200, 200, 600, 600)
+        self.setGeometry(250, 250, 600, 600)
 
         layout = QVBoxLayout()
 
@@ -257,45 +271,75 @@ class VentanaFacturas(QWidget):
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
-class VentanaPrincipal(QWidget):
+class VentanaPrincipal(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Gestión de Facturas e Impuestos')
-        self.setGeometry(150, 150, 350, 200)
+        self.setWindowTitle('Estación de Servicio')
+        self.setGeometry(200, 200, 350, 250)
 
-        layout = QVBoxLayout()
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
-        self.boton_facturas = QPushButton('Tipo de Factura', self)
-        self.boton_facturas.clicked.connect(self.abrir_ventana_facturas)
-        self.boton_facturas.setFixedSize(200, 50)
+        layout = QVBoxLayout(central_widget)
 
         self.boton_impuestos = QPushButton('Impuestos', self)
-        self.boton_impuestos.clicked.connect(self.abrir_ventana_impuestos)
-        self.boton_impuestos.setFixedSize(200, 50)
+        self.boton_impuestos.clicked.connect(self.mostrar_ventana_impuestos)
+        self.boton_impuestos.setMinimumHeight(50)
 
-        for boton in [self.boton_facturas, self.boton_impuestos]:
-            hbox = QHBoxLayout()
-            hbox.addStretch(1)
-            hbox.addWidget(boton)
-            hbox.addStretch(1)
-            layout.addLayout(hbox)
+        self.boton_facturas = QPushButton('Tipo de Factura', self)
+        self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
+        self.boton_facturas.setMinimumHeight(50)
 
-        self.setLayout(layout)
+        layout.addWidget(self.boton_impuestos)
+        layout.addWidget(self.boton_facturas)
 
-    def abrir_ventana_facturas(self):
-        self.ventana_facturas = VentanaFacturas()
-        self.ventana_facturas.show()
-
-    def abrir_ventana_impuestos(self):
+    def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
         self.ventana_impuestos.show()
 
+    def mostrar_ventana_facturas(self):
+        self.ventana_factura_a = VentanaFacturas()
+        self.ventana_factura_a.show()
+
+
 if __name__ == '__main__':
+    def init_db():
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute('DROP TABLE IF EXISTS impuestos')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS impuestos (
+                id INTEGER PRIMARY KEY,
+                gasoil_icl REAL,
+                gasoil_idc REAL,
+                diesel_icl REAL,
+                diesel_idc REAL,
+                nafta_super_icl REAL,
+                nafta_super_idc REAL,
+                nafta_euro_icl REAL,
+                nafta_euro_idc REAL
+            )
+        ''')
+        conn.commit()
+        conn.close()
+
+    def insert_initial_data():
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO impuestos (id, gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
+            VALUES (1, 1.0, 2.0, 1.1, 2.1, 1.2, 2.2, 1.3, 2.3)
+        ''')
+        conn.commit()
+        conn.close()
+
     init_db()
+    insert_initial_data()
+
     app = QApplication([])
-    ventana = VentanaPrincipal()
-    ventana.show()
+    ventana_principal = VentanaPrincipal()
+    ventana_principal.show()
     app.exec_()
