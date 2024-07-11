@@ -1,71 +1,43 @@
 import sqlite3
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QClipboard
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 # Base de datos
 DATABASE = 'impuestos.db'
-
-# Inicializar la base de datos
-def init_db():
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
-    c.execute('''
-        DROP TABLE IF EXISTS impuestos
-    ''')
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS impuestos (
-            id INTEGER PRIMARY KEY,
-            gasoil_icl REAL,
-            gasoil_idc REAL,
-            diesel_icl REAL,
-            diesel_idc REAL,
-            nafta_super_icl REAL,
-            nafta_super_idc REAL,
-            nafta_euro_icl REAL,
-            nafta_euro_idc REAL
-        )
-    ''')
-    conn.commit()
-    conn.close()
 
 class VentanaImpuestos(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.cargar_valores()
 
     def initUI(self):
-        self.setWindowTitle("Gestión de Impuestos")
+        self.setWindowTitle('Impuestos')
         self.setGeometry(250, 250, 400, 400)
 
         layout = QVBoxLayout()
 
-        # Crear etiquetas y spin boxes para cada valor
-        self.labels = {}
-        self.spin_boxes = {}
+        self.campos_impuestos = {}
         naftas = ['gasoil', 'diesel', 'nafta_super', 'nafta_euro']
         impuestos = ['icl', 'idc']
 
         for nafta in naftas:
-            hbox = QHBoxLayout()
+            h_layout = QHBoxLayout()
             for impuesto in impuestos:
-                label = QLabel(f'{nafta.replace("_", " ").upper()} {impuesto.upper()}')
-                spin_box = QDoubleSpinBox(self)
+                
+                label = QLabel(f'{nafta.replace("_", " ").capitalize()} {impuesto.upper()}')
+                spin_box = QDoubleSpinBox()
                 spin_box.setRange(0, 100000)
-                spin_box.setDecimals(2)
+                spin_box.setDecimals(3)
                 spin_box.setPrefix("$")
-                spin_box.valueChanged.connect(self.guardar_valor)
-
-                self.labels[f'{nafta}_{impuesto}'] = label
-                self.spin_boxes[f'{nafta}_{impuesto}'] = spin_box
-
-                hbox.addWidget(label)
-                hbox.addWidget(spin_box)
-            layout.addLayout(hbox)
+                h_layout.addWidget(label)
+                h_layout.addWidget(spin_box)
+                self.campos_impuestos[f'{nafta}_{impuesto}'] = spin_box
+            layout.addLayout(h_layout)
 
         self.boton_guardar = QPushButton('Guardar', self)
-        self.boton_guardar.clicked.connect(self.guardar_valores)
-        self.boton_guardar.setFixedSize(100, 30)
+        self.boton_guardar.clicked.connect(self.guardar_impuestos)
+        self.boton_guardar.setFixedSize(150, 50)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
@@ -74,48 +46,29 @@ class VentanaImpuestos(QWidget):
         layout.addLayout(hbox)
 
         self.setLayout(layout)
+        self.cargar_impuestos()
 
-    def guardar_valores(self):
-        valores = {key: spin_box.value() for key, spin_box in self.spin_boxes.items()}
-        
+    def cargar_impuestos(self):
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
-        c.execute('DELETE FROM impuestos')  # Borrar valores anteriores
-        c.execute('''
-            INSERT INTO impuestos (gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
-            VALUES (:gasoil_icl, :gasoil_idc, :diesel_icl, :diesel_idc, :nafta_super_icl, :nafta_super_idc, :nafta_euro_icl, :nafta_euro_idc)
-        ''', valores)
-        conn.commit()
-        conn.close()
-        
-        QMessageBox.information(self, 'Guardado', 'Los valores han sido guardados.')
-
-    def cargar_valores(self):
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('SELECT gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc FROM impuestos')
+        c.execute('SELECT * FROM impuestos WHERE id=1')
         row = c.fetchone()
-        conn.close()
-        
         if row:
-            for i, key in enumerate(self.spin_boxes.keys()):
-                self.spin_boxes[key].setValue(row[i])
-        else:
-            for spin_box in self.spin_boxes.values():
-                spin_box.setValue(0)
-    
-    def guardar_valor(self):
+            for i, key in enumerate(self.campos_impuestos.keys(), start=1):
+                self.campos_impuestos[key].setValue(row[i])
+        conn.close()
+
+    def guardar_impuestos(self):
         conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        
-        valores = [self.spin_boxes[key].value() for key in self.spin_boxes.keys()]
-        valores.insert(0, 1)  # Insertar el ID = 1
-        cursor.execute('''
-            REPLACE INTO impuestos (id, gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        c = conn.cursor()
+        valores = [self.campos_impuestos[key].value() for key in self.campos_impuestos.keys()]
+        c.execute('''
+            INSERT OR REPLACE INTO impuestos (id, gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', valores)
         conn.commit()
         conn.close()
+        QMessageBox.information(self, 'Guardado', 'Valores de impuestos guardados exitosamente.')
 
 class VentanaFacturas(QWidget):
     def __init__(self):
@@ -217,7 +170,6 @@ class VentanaFacturas(QWidget):
 
         cursor.execute('SELECT * FROM impuestos WHERE id = 1')
         fila = cursor.fetchone()
-        
         if fila:
             for idx, nafta in enumerate(naftas):
                 for impuesto in impuestos:
@@ -231,45 +183,50 @@ class VentanaFacturas(QWidget):
     def calcular_factura_a(self):
         try:
             resultados = {}
-            impuesto_total = 0
+            total_idc = 0
+            total_icl = 0
             for key in self.spin_boxes.keys():
                 valor = self.spin_boxes[key].value()
                 litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f'{key}_icl')
-                idc = getattr(self, f'{key}_idc')
+                icl = getattr(self, f"{key}_icl")
+                idc = getattr(self, f"{key}_idc")
                 resultado = round((valor - icl - idc) / 1.21, 2)
-                impuesto_individual = round(icl * litros + idc * litros, 2)
-                impuesto_total += impuesto_individual
                 resultados[key] = resultado
-
-            resultados_texto = '\n'.join([f'{key.capitalize().replace("_", " ")}: {result} (Impuesto: {round((getattr(self, f"{key}_icl") + getattr(self, f"{key}_idc")) * self.litros_spin_boxes[key].value(), 2)})' for key, result in resultados.items()])
-            resultados_texto += f'\nImpuesto Total: {impuesto_total}'
-            self.resultados_texto.setText(resultados_texto)
+                total_icl += icl * litros
+                total_idc += idc * litros
+            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura A")
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
     def calcular_factura_b(self):
         try:
             resultados = {}
-            resultados_finales = {}
-            impuesto_total = 0
+            total_idc = 0
+            total_icl = 0
             for key in self.spin_boxes.keys():
                 valor = self.spin_boxes[key].value()
                 litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f'{key}_icl')
-                idc = getattr(self, f'{key}_idc')
+                icl = getattr(self, f"{key}_icl")
+                idc = getattr(self, f"{key}_idc")
                 resultado = round((valor - icl - idc) / 1.21, 2)
-                resultado_final = round(resultado * 0.21 + resultado, 2)
-                impuesto_individual = round(icl * litros + idc * litros, 2)
-                impuesto_total += impuesto_individual
-                resultados[key] = resultado
-                resultados_finales[key] = resultado_final
+                resultado_b = round(resultado * 0.21 + resultado, 2)
+                resultados[key] = resultado_b
+                total_icl += icl * litros
+                total_idc += idc * litros
+            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura B")
+        except Exception as e:
+            QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
-            resultados_texto = '\n'.join([f'{key.capitalize().replace("_", " ")}: {resultados[key]} (Final: {resultados_finales[key]}) (Impuesto: {round((getattr(self, f"{key}_icl") + getattr(self, f"{key}_idc")) * self.litros_spin_boxes[key].value(), 2)})' for key in resultados.keys()])
-            resultados_texto += f'\nImpuesto Total: {impuesto_total}'
+    def mostrar_resultados(self, resultados, total_icl, total_idc, tipo):
+        try:
+            resultados_texto = f'Resultados ({tipo}):\n'
+            resultados_texto += '\n'.join([f'{key.capitalize().replace("_", " ")}: {resultados[key]}' for key in resultados.keys()])
+            resultados_texto += f'\nICL Total: {total_icl}'
+            resultados_texto += f'\nIDC Total: {total_idc}'
             self.resultados_texto.setText(resultados_texto)
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
+
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
@@ -279,20 +236,23 @@ class VentanaPrincipal(QMainWindow):
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
         self.setGeometry(200, 200, 350, 250)
+        self.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\Fuel_station.ico"))
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout(central_widget)
 
+        # Crear botones
         self.boton_impuestos = QPushButton('Impuestos', self)
         self.boton_impuestos.clicked.connect(self.mostrar_ventana_impuestos)
-        self.boton_impuestos.setMinimumHeight(50)
+        self.boton_impuestos.setFixedHeight(50)
 
         self.boton_facturas = QPushButton('Tipo de Factura', self)
         self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
-        self.boton_facturas.setMinimumHeight(50)
+        self.boton_facturas.setFixedHeight(50)
 
+        
         layout.addWidget(self.boton_impuestos)
         layout.addWidget(self.boton_facturas)
 
@@ -305,37 +265,39 @@ class VentanaPrincipal(QMainWindow):
         self.ventana_factura_a.show()
 
 
-if __name__ == '__main__':
-    def init_db():
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
-        c.execute('DROP TABLE IF EXISTS impuestos')
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS impuestos (
-                id INTEGER PRIMARY KEY,
-                gasoil_icl REAL,
-                gasoil_idc REAL,
-                diesel_icl REAL,
-                diesel_idc REAL,
-                nafta_super_icl REAL,
-                nafta_super_idc REAL,
-                nafta_euro_icl REAL,
-                nafta_euro_idc REAL
-            )
-        ''')
-        conn.commit()
-        conn.close()
+def init_db():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS impuestos (
+            id INTEGER PRIMARY KEY,
+            gasoil_icl REAL,
+            gasoil_idc REAL,
+            diesel_icl REAL,
+            diesel_idc REAL,
+            nafta_super_icl REAL,
+            nafta_super_idc REAL,
+            nafta_euro_icl REAL,
+            nafta_euro_idc REAL
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-    def insert_initial_data():
-        conn = sqlite3.connect(DATABASE)
-        c = conn.cursor()
+def insert_initial_data():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM impuestos WHERE id = 1')
+    if c.fetchone()[0] == 0:
         c.execute('''
             INSERT INTO impuestos (id, gasoil_icl, gasoil_idc, diesel_icl, diesel_idc, nafta_super_icl, nafta_super_idc, nafta_euro_icl, nafta_euro_idc)
-            VALUES (1, 1.0, 2.0, 1.1, 2.1, 1.2, 2.2, 1.3, 2.3)
+            VALUES (1, 0, 0, 0, 0, 0, 0, 0, 0)
         ''')
-        conn.commit()
-        conn.close()
+    conn.commit()
+    conn.close()
 
+
+if __name__ == '__main__':
     init_db()
     insert_initial_data()
 
