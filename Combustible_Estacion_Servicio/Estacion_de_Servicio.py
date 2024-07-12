@@ -26,6 +26,7 @@ class VentanaImpuestos(QWidget):
             for impuesto in impuestos:
                 
                 label = QLabel(f'{nafta.replace("_", " ").capitalize()} {impuesto.upper()}')
+                label.setFont(QFont("Roboto", 10))
                 spin_box = QDoubleSpinBox()
                 spin_box.setRange(0, 100000)
                 spin_box.setDecimals(3)
@@ -77,12 +78,13 @@ class VentanaFacturas(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Tipo de Factura')
-        self.setGeometry(250, 250, 600, 600)
+        self.setGeometry(250, 250, 650, 600)
 
         layout = QVBoxLayout()
 
         # Mostrar valores de impuestos
-        self.label_impuestos = QLabel('Valores de Impuestos:')
+        self.label_impuestos = QLabel('Valores de Impuestos\n')
+        self.label_impuestos.setFont(QFont("Arial", 13, QFont.Bold))
         layout.addWidget(self.label_impuestos)
         
         self.labels_naftas = {}
@@ -94,6 +96,7 @@ class VentanaFacturas(QWidget):
         for nafta in naftas:
             for col, impuesto in enumerate(impuestos):
                 label = QLabel(f'{nafta.capitalize().replace("_", " ")} {impuesto.upper()}:')
+                label.setFont(QFont("Roboto", 10))
                 self.labels_naftas[f'{nafta}_{impuesto}'] = label
                 grid_naftas.addWidget(label, row, col)
             row += 1
@@ -101,7 +104,11 @@ class VentanaFacturas(QWidget):
         layout.addLayout(grid_naftas)
 
         # Agregar un spacer para separar los layouts
-        layout.addSpacerItem(QSpacerItem(20, 50))
+        layout.addSpacerItem(QSpacerItem(20, 30))
+
+        self.label_titulo_naftas = QLabel("Entrada de Datos")
+        self.label_titulo_naftas.setFont(QFont("Arial", 13, QFont.Bold))
+        layout.addWidget(self.label_titulo_naftas)
     
         # Sección para ingresar valores y litros
         self.labels = {}
@@ -109,13 +116,13 @@ class VentanaFacturas(QWidget):
         self.litros_spin_boxes = {}
         
         grid_valores = QGridLayout()
-        grid_valores.addWidget(QLabel('Naftas'), 0, 0)
-        grid_valores.addWidget(QLabel("Precio"), 0, 1)
+        grid_valores.addWidget(QLabel("Precio Final"), 0, 1)
         grid_valores.addWidget(QLabel('Litros'), 0, 2)
         
         row = 1
         for nafta in naftas:
-            label = QLabel(f'{nafta.capitalize().replace("_", " ")}:')
+            label = QLabel(f'{nafta.capitalize().replace("_", " ")}')
+            label.setFont(QFont("Roboto", 10))
             spin_box = QDoubleSpinBox(self)
             spin_box.setRange(0, 100000)
             spin_box.setDecimals(2)
@@ -125,6 +132,7 @@ class VentanaFacturas(QWidget):
             litros_spin_box.setRange(0, 100000)
             litros_spin_box.setDecimals(2)
             litros_spin_box.setSuffix("\tLitros")
+            litros_spin_box.setFont(QFont("Roboto", 8))
             
             self.labels[nafta] = label
             self.spin_boxes[nafta] = spin_box
@@ -145,6 +153,9 @@ class VentanaFacturas(QWidget):
         self.boton_factura_b = QPushButton('Factura B', self)
         self.boton_factura_b.clicked.connect(self.calcular_factura_b)
         self.boton_factura_b.setFixedSize(200, 50)
+
+        self.boton_factura_a.setStyleSheet("QPushButton { font-size: 14px; padding: 8px; }")
+        self.boton_factura_b.setStyleSheet("QPushButton { font-size: 14px; padding: 8px; }")
         
         hbox_botones = QHBoxLayout()
         hbox_botones.addWidget(self.boton_factura_a)
@@ -155,7 +166,8 @@ class VentanaFacturas(QWidget):
         # Área de texto para mostrar resultados
         self.resultados_texto = QTextEdit(self)
         self.resultados_texto.setReadOnly(True)
-        self.resultados_texto.setStyleSheet("font-size: 16pt;")  # Ajustar el tamaño de la fuente
+        #self.resultados_texto.setStyleSheet("font-size: 16pt;")  # Ajustar el tamaño de la fuente
+        self.resultados_texto.setFont(QFont("Rockwell", 16))
         layout.addWidget(self.resultados_texto)
 
         self.setLayout(layout)
@@ -252,17 +264,18 @@ class VentanaPrincipal(QMainWindow):
         self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
         self.boton_facturas.setFixedHeight(50)
 
-        
         layout.addWidget(self.boton_impuestos)
         layout.addWidget(self.boton_facturas)
 
     def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
+        self.ventana_impuestos.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\impuestos.ico"))
         self.ventana_impuestos.show()
 
     def mostrar_ventana_facturas(self):
-        self.ventana_factura_a = VentanaFacturas()
-        self.ventana_factura_a.show()
+        self.ventana_facturas = VentanaFacturas()
+        self.ventana_facturas.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\Facturas.ico"))
+        self.ventana_facturas.show()
 
 
 def init_db():
