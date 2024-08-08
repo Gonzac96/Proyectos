@@ -83,8 +83,8 @@ class VentanaFacturas(QWidget):
         layout = QVBoxLayout()
 
         # Mostrar valores de impuestos
-        self.label_impuestos = QLabel('Valores de Impuestos\n')
-        self.label_impuestos.setFont(QFont("Arial", 13, QFont.Bold))
+        self.label_impuestos = QLabel('Valores de Impuestos')
+        self.label_impuestos.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(self.label_impuestos)
         
         self.labels_naftas = {}
@@ -106,8 +106,13 @@ class VentanaFacturas(QWidget):
         # Agregar un spacer para separar los layouts
         layout.addSpacerItem(QSpacerItem(20, 30))
 
+        linea2 = QFrame()
+        linea2.setFrameShape(QFrame.HLine)
+        linea2.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(linea2)
+
         self.label_titulo_naftas = QLabel("Entrada de Datos")
-        self.label_titulo_naftas.setFont(QFont("Arial", 13, QFont.Bold))
+        self.label_titulo_naftas.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(self.label_titulo_naftas)
     
         # Sección para ingresar valores y litros
@@ -131,7 +136,7 @@ class VentanaFacturas(QWidget):
             litros_spin_box = QDoubleSpinBox(self)
             litros_spin_box.setRange(0, 100000)
             litros_spin_box.setDecimals(2)
-            litros_spin_box.setSuffix("\tLitros")
+            litros_spin_box.setSuffix("Lts")
             litros_spin_box.setFont(QFont("Roboto", 8))
             
             self.labels[nafta] = label
@@ -244,6 +249,7 @@ class VentanaPrincipal(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
+
 
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
