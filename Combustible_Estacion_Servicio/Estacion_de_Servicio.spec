@@ -5,7 +5,7 @@ a = Analysis(
     ['Estacion_de_Servicio.py'],
     pathex=[],
     binaries=[],
-    datas=[('impuestos.db', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
