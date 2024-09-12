@@ -198,20 +198,35 @@ class VentanaFacturas(QWidget):
         conn.close()
 
     def calcular_factura_a(self):
-        try:
+        try: 
             resultados = {}
             total_idc = 0
             total_icl = 0
+            
             for key in self.spin_boxes.keys():
-                valor = self.spin_boxes[key].value()
-                litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f"{key}_icl")
-                idc = getattr(self, f"{key}_idc")
-                resultado = round((valor - icl - idc) / 1.21, 2)
-                resultados[key] = resultado
-                total_icl += icl * litros
-                total_idc += idc * litros
-            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura A")
+                valor_nafta = self.spin_boxes[key].value()  # Precios ingresados en Factura A
+                valor_litros = self.litros_spin_boxes[key].value()  # Litros ingresados en Factura A
+                
+                # Validación: Solo realizar el cálculo si los valores de precio y litros son mayores a 0
+                if valor_nafta > 0 and valor_litros > 0:
+                    icl = getattr(self, f"{key}_icl")  # Valor ICL desde Impuestos
+                    idc = getattr(self, f"{key}_idc")  # Valor IDC desde Impuestos
+                    
+                    # Cálculo del resultado
+                    resultado = round((valor_nafta - icl - idc) / 1.21, 2)
+                    resultados[key] = resultado
+                    
+                    # Acumular el total de ICL e IDC multiplicado por los litros
+                    total_icl += icl * valor_litros
+                    total_idc += idc * valor_litros
+            
+            # Se muestran los resultados finales, solo si se realizaron los cálculos
+            if resultados:
+                self.mostrar_resultados(resultados, total_icl, total_idc, "Factura A")
+            else:
+                # Mostrar una advertencia si no se ingresaron valores válidos
+                QMessageBox.warning(self, 'Advertencia', 'Por favor, ingrese valores válidos para los cálculos.')
+                
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
@@ -220,17 +235,34 @@ class VentanaFacturas(QWidget):
             resultados = {}
             total_idc = 0
             total_icl = 0
+            
             for key in self.spin_boxes.keys():
-                valor = self.spin_boxes[key].value()
-                litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f"{key}_icl")
-                idc = getattr(self, f"{key}_idc")
-                resultado = round((valor - icl - idc) / 1.21, 2)
-                resultado_b = round(resultado * 0.21 + resultado, 2)
-                resultados[key] = resultado_b
-                total_icl += icl * litros
-                total_idc += idc * litros
-            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura B")
+                valor_nafta = self.spin_boxes[key].value()  # Precios ingresados en Factura B
+                valor_litros = self.litros_spin_boxes[key].value()  # Litros ingresados en Factura B
+                
+                # Validación: Solo realizar el cálculo si los valores de precio y litros son mayores a 0
+                if valor_nafta > 0 and valor_litros > 0:
+                    icl = getattr(self, f"{key}_icl")  # Valor ICL desde Impuestos
+                    idc = getattr(self, f"{key}_idc")  # Valor IDC desde Impuestos
+                    
+                    # Cálculo inicial del resultado (igual que en Factura A)
+                    resultado = round((valor_nafta - icl - idc) / 1.21, 2)
+                    
+                    # Cálculo adicional para Factura B
+                    resultado_b = round(resultado * 0.21 + resultado, 2)
+                    resultados[key] = resultado_b
+                    
+                    # Acumular el total de ICL e IDC multiplicado por los litros
+                    total_icl += icl * valor_litros
+                    total_idc += idc * valor_litros
+            
+            # Se muestran los resultados finales, solo si se realizaron los cálculos
+            if resultados:
+                self.mostrar_resultados(resultados, total_icl, total_idc, "Factura B")
+            else:
+                # Mostrar una advertencia si no se ingresaron valores válidos
+                QMessageBox.warning(self, 'Advertencia', 'Por favor, ingrese valores válidos para los cálculos.')
+                
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
