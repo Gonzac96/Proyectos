@@ -1,4 +1,5 @@
 import sqlite3
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -285,8 +286,8 @@ class VentanaPrincipal(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
-        self.setGeometry(200, 200, 350, 250)
-        self.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\Fuel_station.ico"))
+        self.setGeometry(200, 200, 300, 330)
+        self.setWindowIcon(QtGui.QIcon("Fuel_station.ico"))
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -296,23 +297,38 @@ class VentanaPrincipal(QMainWindow):
         # Crear botones
         self.boton_impuestos = QPushButton('Impuestos', self)
         self.boton_impuestos.clicked.connect(self.mostrar_ventana_impuestos)
-        self.boton_impuestos.setFixedHeight(50)
+        self.boton_impuestos.setFixedSize(150, 60)
+        self.boton_impuestos.setIcon(QtGui.QIcon("impuestos.ico"))
+        self.boton_impuestos.setToolTip("Cargar los valores de los impuestos")
 
         self.boton_facturas = QPushButton('Tipo de Factura', self)
         self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
-        self.boton_facturas.setFixedHeight(50)
+        self.boton_facturas.setFixedSize(150, 60)
+        self.boton_facturas.setIcon(QtGui.QIcon("Facturas.ico"))
+        self.boton_facturas.setToolTip("Cálculo del valor para facturas A y B")
+        
+        # Crear un layout horizontal para centrar los botones
+        h_layout_impuestos = QHBoxLayout()
+        h_layout_impuestos.addStretch(1)
+        h_layout_impuestos.addWidget(self.boton_impuestos)
+        h_layout_impuestos.addStretch(1)
 
-        layout.addWidget(self.boton_impuestos)
-        layout.addWidget(self.boton_facturas)
+        h_layout_facturas = QHBoxLayout()
+        h_layout_facturas.addStretch(1)
+        h_layout_facturas.addWidget(self.boton_facturas)
+        h_layout_facturas.addStretch(1)
+
+        layout.addLayout(h_layout_impuestos)
+        layout.addLayout(h_layout_facturas)
 
     def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
-        self.ventana_impuestos.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\impuestos.ico"))
+        self.ventana_impuestos.setWindowIcon(QtGui.QIcon("impuestos.ico"))
         self.ventana_impuestos.show()
 
     def mostrar_ventana_facturas(self):
         self.ventana_facturas = VentanaFacturas()
-        self.ventana_facturas.setWindowIcon(QIcon("S:\Proyectos\Combustible_Estacion_Servicio\Facturas.ico"))
+        self.ventana_facturas.setWindowIcon(QtGui.QIcon("Facturas.ico"))
         self.ventana_facturas.show()
 
 
