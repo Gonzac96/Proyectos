@@ -3,9 +3,17 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+import sys
+import os
 
 # Base de datos
 DATABASE = 'impuestos.db'
+
+# Función para obtener la ruta de los recursos
+def get_resource_path(relative_path):
+    """Obtiene la ruta del recurso tanto en desarrollo como en el ejecutable."""
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 class VentanaImpuestos(QWidget):
     def __init__(self):
@@ -40,15 +48,25 @@ class VentanaImpuestos(QWidget):
         self.boton_guardar = QPushButton('Guardar', self)
         self.boton_guardar.clicked.connect(self.guardar_impuestos)
         self.boton_guardar.setFixedSize(150, 50)
+        
+        self.boton_resetear = QPushButton("Borrar", self)
+        self.boton_resetear.clicked.connect(self.resetear_spinbox)
+        self.boton_resetear.setFixedSize(150, 50)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.boton_guardar)
+        hbox.addWidget(self.boton_resetear)
         hbox.addStretch(1)
         layout.addLayout(hbox)
 
         self.setLayout(layout)
         self.cargar_impuestos()
+    
+    """Función para establecer el valor de todos los QDoubleSpinBox en 0."""
+    def resetear_spinbox(self):
+        for key in self.campos_impuestos.keys():
+            self.campos_impuestos[key].setValue(0)
 
     def cargar_impuestos(self):
         conn = sqlite3.connect(DATABASE)
@@ -287,7 +305,9 @@ class VentanaPrincipal(QMainWindow):
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
         self.setGeometry(200, 200, 300, 330)
-        self.setWindowIcon(QtGui.QIcon("Fuel_station.ico"))
+        #self.setWindowIcon(QtGui.QIcon("Fuel_station.ico"))
+        icono_ventana_principal = get_resource_path('iconos/Fuel_station.ico')
+        self.setWindowIcon(QIcon(icono_ventana_principal))
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -298,13 +318,17 @@ class VentanaPrincipal(QMainWindow):
         self.boton_impuestos = QPushButton('Impuestos', self)
         self.boton_impuestos.clicked.connect(self.mostrar_ventana_impuestos)
         self.boton_impuestos.setFixedSize(150, 60)
-        self.boton_impuestos.setIcon(QtGui.QIcon("impuestos.ico"))
+        #self.boton_impuestos.setIcon(QtGui.QIcon("impuestos.ico"))
+        icono_boton_impuestos = get_resource_path('iconos/impuestos.ico')
+        self.boton_impuestos.setIcon(QIcon(icono_boton_impuestos))
         self.boton_impuestos.setToolTip("Cargar los valores de los impuestos")
 
         self.boton_facturas = QPushButton('Tipo de Factura', self)
         self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
         self.boton_facturas.setFixedSize(150, 60)
-        self.boton_facturas.setIcon(QtGui.QIcon("Facturas.ico"))
+        #self.boton_facturas.setIcon(QtGui.QIcon("Facturas.ico"))
+        icono_boton_facturas = get_resource_path('iconos/Facturas.ico')
+        self.boton_facturas.setIcon(QIcon(icono_boton_facturas))
         self.boton_facturas.setToolTip("Cálculo del valor para facturas A y B")
         
         # Crear un layout horizontal para centrar los botones
@@ -323,12 +347,16 @@ class VentanaPrincipal(QMainWindow):
 
     def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
-        self.ventana_impuestos.setWindowIcon(QtGui.QIcon("impuestos.ico"))
+        #self.ventana_impuestos.setWindowIcon(QtGui.QIcon("impuestos.ico"))
+        icono_ventana_impuestos = get_resource_path('iconos/impuestos.ico')
+        self.ventana_impuestos.setWindowIcon(QIcon(icono_ventana_impuestos))
         self.ventana_impuestos.show()
 
     def mostrar_ventana_facturas(self):
         self.ventana_facturas = VentanaFacturas()
-        self.ventana_facturas.setWindowIcon(QtGui.QIcon("Facturas.ico"))
+        #self.ventana_facturas.setWindowIcon(QtGui.QIcon("Facturas.ico"))
+        icono_ventana_facturas = get_resource_path('iconos/Facturas.ico')
+        self.ventana_facturas.setWindowIcon(QIcon(icono_ventana_facturas))
         self.ventana_facturas.show()
 
 
