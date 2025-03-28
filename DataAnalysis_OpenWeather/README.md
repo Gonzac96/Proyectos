@@ -1,6 +1,6 @@
 # Data Analysis
 
-![](pandas_python.jpg")
+![](imagenes/pandas_python.jpg)
 ### API de Consumo
 
 - [API de Clima](https://api.openweathermap.org "API de Clima OpenWeather")
