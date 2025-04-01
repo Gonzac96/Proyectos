@@ -1,9 +1,9 @@
 # Data Analysis
 
 ![](imagenes/pandasPython.png)
-### API de Consumo
+### API para obtención de datos
 
-- [API de Clima](https://api.openweathermap.org "API de Clima OpenWeather")
+- [API de Clima](https://api.openweathermap.org "API de Clima OpenWeatherMap")
 
 ## Ejecución de Base de Datos (PostgreSQL)
 - Se ejecuta en Clever Cloud en un servidor gratuito
