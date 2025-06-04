@@ -1,0 +1,1 @@
+pyinstaller --add-data "iconos/*;iconos" --windowed --icon="iconos/Fuel_station.ico" --name="Estación de Servicio" Estacion_de_Servicio.py

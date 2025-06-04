@@ -1,10 +1,19 @@
 import sqlite3
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+import sys
+import os
 
 # Base de datos
 DATABASE = 'impuestos.db'
+
+# Función para obtener la ruta de los recursos
+def get_resource_path(relative_path):
+    """Obtiene la ruta del recurso tanto en desarrollo como en el ejecutable."""
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 class VentanaImpuestos(QWidget):
     def __init__(self):
@@ -39,15 +48,25 @@ class VentanaImpuestos(QWidget):
         self.boton_guardar = QPushButton('Guardar', self)
         self.boton_guardar.clicked.connect(self.guardar_impuestos)
         self.boton_guardar.setFixedSize(150, 50)
+        
+        self.boton_resetear = QPushButton("Borrar", self)
+        self.boton_resetear.clicked.connect(self.resetear_spinbox)
+        self.boton_resetear.setFixedSize(150, 50)
 
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.boton_guardar)
+        hbox.addWidget(self.boton_resetear)
         hbox.addStretch(1)
         layout.addLayout(hbox)
 
         self.setLayout(layout)
         self.cargar_impuestos()
+    
+    """Función para establecer el valor de todos los QDoubleSpinBox en 0."""
+    def resetear_spinbox(self):
+        for key in self.campos_impuestos.keys():
+            self.campos_impuestos[key].setValue(0)
 
     def cargar_impuestos(self):
         conn = sqlite3.connect(DATABASE)
@@ -83,8 +102,8 @@ class VentanaFacturas(QWidget):
         layout = QVBoxLayout()
 
         # Mostrar valores de impuestos
-        self.label_impuestos = QLabel('Valores de Impuestos\n')
-        self.label_impuestos.setFont(QFont("Arial", 13, QFont.Bold))
+        self.label_impuestos = QLabel('Valores de Impuestos')
+        self.label_impuestos.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(self.label_impuestos)
         
         self.labels_naftas = {}
@@ -106,8 +125,13 @@ class VentanaFacturas(QWidget):
         # Agregar un spacer para separar los layouts
         layout.addSpacerItem(QSpacerItem(20, 30))
 
+        linea2 = QFrame()
+        linea2.setFrameShape(QFrame.HLine)
+        linea2.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(linea2)
+
         self.label_titulo_naftas = QLabel("Entrada de Datos")
-        self.label_titulo_naftas.setFont(QFont("Arial", 13, QFont.Bold))
+        self.label_titulo_naftas.setFont(QFont("Arial", 14, QFont.Bold))
         layout.addWidget(self.label_titulo_naftas)
     
         # Sección para ingresar valores y litros
@@ -131,7 +155,7 @@ class VentanaFacturas(QWidget):
             litros_spin_box = QDoubleSpinBox(self)
             litros_spin_box.setRange(0, 100000)
             litros_spin_box.setDecimals(2)
-            litros_spin_box.setSuffix("\tLitros")
+            litros_spin_box.setSuffix("Lts")
             litros_spin_box.setFont(QFont("Roboto", 8))
             
             self.labels[nafta] = label
@@ -193,20 +217,35 @@ class VentanaFacturas(QWidget):
         conn.close()
 
     def calcular_factura_a(self):
-        try:
+        try: 
             resultados = {}
             total_idc = 0
             total_icl = 0
+            
             for key in self.spin_boxes.keys():
-                valor = self.spin_boxes[key].value()
-                litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f"{key}_icl")
-                idc = getattr(self, f"{key}_idc")
-                resultado = round((valor - icl - idc) / 1.21, 2)
-                resultados[key] = resultado
-                total_icl += icl * litros
-                total_idc += idc * litros
-            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura A")
+                valor_nafta = self.spin_boxes[key].value()  # Precios ingresados en Factura A
+                valor_litros = self.litros_spin_boxes[key].value()  # Litros ingresados en Factura A
+                
+                # Validación: Solo realizar el cálculo si los valores de precio y litros son mayores a 0
+                if valor_nafta > 0 and valor_litros > 0:
+                    icl = getattr(self, f"{key}_icl")  # Valor ICL desde Impuestos
+                    idc = getattr(self, f"{key}_idc")  # Valor IDC desde Impuestos
+                    
+                    # Cálculo del resultado
+                    resultado = round((valor_nafta - icl - idc) / 1.21, 2)
+                    resultados[key] = resultado
+                    
+                    # Acumular el total de ICL e IDC multiplicado por los litros
+                    total_icl += icl * valor_litros
+                    total_idc += idc * valor_litros
+            
+            # Se muestran los resultados finales, solo si se realizaron los cálculos
+            if resultados:
+                self.mostrar_resultados(resultados, total_icl, total_idc, "Factura A")
+            else:
+                # Mostrar una advertencia si no se ingresaron valores válidos
+                QMessageBox.warning(self, 'Advertencia', 'Por favor, ingrese valores válidos para los cálculos.')
+                
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
@@ -215,17 +254,34 @@ class VentanaFacturas(QWidget):
             resultados = {}
             total_idc = 0
             total_icl = 0
+            
             for key in self.spin_boxes.keys():
-                valor = self.spin_boxes[key].value()
-                litros = self.litros_spin_boxes[key].value()
-                icl = getattr(self, f"{key}_icl")
-                idc = getattr(self, f"{key}_idc")
-                resultado = round((valor - icl - idc) / 1.21, 2)
-                resultado_b = round(resultado * 0.21 + resultado, 2)
-                resultados[key] = resultado_b
-                total_icl += icl * litros
-                total_idc += idc * litros
-            self.mostrar_resultados(resultados, total_icl, total_idc, "Factura B")
+                valor_nafta = self.spin_boxes[key].value()  # Precios ingresados en Factura B
+                valor_litros = self.litros_spin_boxes[key].value()  # Litros ingresados en Factura B
+                
+                # Validación: Solo realizar el cálculo si los valores de precio y litros son mayores a 0
+                if valor_nafta > 0 and valor_litros > 0:
+                    icl = getattr(self, f"{key}_icl")  # Valor ICL desde Impuestos
+                    idc = getattr(self, f"{key}_idc")  # Valor IDC desde Impuestos
+                    
+                    # Cálculo inicial del resultado (igual que en Factura A)
+                    resultado = round((valor_nafta - icl - idc) / 1.21, 2)
+                    
+                    # Cálculo adicional para Factura B
+                    resultado_b = round(resultado * 0.21 + resultado, 2)
+                    resultados[key] = resultado_b
+                    
+                    # Acumular el total de ICL e IDC multiplicado por los litros
+                    total_icl += icl * valor_litros
+                    total_idc += idc * valor_litros
+            
+            # Se muestran los resultados finales, solo si se realizaron los cálculos
+            if resultados:
+                self.mostrar_resultados(resultados, total_icl, total_idc, "Factura B")
+            else:
+                # Mostrar una advertencia si no se ingresaron valores válidos
+                QMessageBox.warning(self, 'Advertencia', 'Por favor, ingrese valores válidos para los cálculos.')
+                
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Ocurrió un error: {e}')
 
@@ -245,10 +301,18 @@ class VentanaPrincipal(QMainWindow):
         super().__init__()
         self.initUI()
 
+
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
+<<<<<<< HEAD
         self.setGeometry(200, 200, 350, 250)
         self.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\Fuel_station.ico"))
+=======
+        self.setGeometry(200, 200, 300, 330)
+        #self.setWindowIcon(QtGui.QIcon("Fuel_station.ico"))
+        icono_ventana_principal = get_resource_path('iconos/Fuel_station.ico')
+        self.setWindowIcon(QIcon(icono_ventana_principal))
+>>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -258,23 +322,54 @@ class VentanaPrincipal(QMainWindow):
         # Crear botones
         self.boton_impuestos = QPushButton('Impuestos', self)
         self.boton_impuestos.clicked.connect(self.mostrar_ventana_impuestos)
-        self.boton_impuestos.setFixedHeight(50)
+        self.boton_impuestos.setFixedSize(150, 60)
+        #self.boton_impuestos.setIcon(QtGui.QIcon("impuestos.ico"))
+        icono_boton_impuestos = get_resource_path('iconos/impuestos.ico')
+        self.boton_impuestos.setIcon(QIcon(icono_boton_impuestos))
+        self.boton_impuestos.setToolTip("Cargar los valores de los impuestos")
 
         self.boton_facturas = QPushButton('Tipo de Factura', self)
         self.boton_facturas.clicked.connect(self.mostrar_ventana_facturas)
-        self.boton_facturas.setFixedHeight(50)
+        self.boton_facturas.setFixedSize(150, 60)
+        #self.boton_facturas.setIcon(QtGui.QIcon("Facturas.ico"))
+        icono_boton_facturas = get_resource_path('iconos/Facturas.ico')
+        self.boton_facturas.setIcon(QIcon(icono_boton_facturas))
+        self.boton_facturas.setToolTip("Cálculo del valor para facturas A y B")
+        
+        # Crear un layout horizontal para centrar los botones
+        h_layout_impuestos = QHBoxLayout()
+        h_layout_impuestos.addStretch(1)
+        h_layout_impuestos.addWidget(self.boton_impuestos)
+        h_layout_impuestos.addStretch(1)
 
-        layout.addWidget(self.boton_impuestos)
-        layout.addWidget(self.boton_facturas)
+        h_layout_facturas = QHBoxLayout()
+        h_layout_facturas.addStretch(1)
+        h_layout_facturas.addWidget(self.boton_facturas)
+        h_layout_facturas.addStretch(1)
+
+        layout.addLayout(h_layout_impuestos)
+        layout.addLayout(h_layout_facturas)
 
     def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
+<<<<<<< HEAD
         self.ventana_impuestos.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\impuestos.ico"))
+=======
+        #self.ventana_impuestos.setWindowIcon(QtGui.QIcon("impuestos.ico"))
+        icono_ventana_impuestos = get_resource_path('iconos/impuestos.ico')
+        self.ventana_impuestos.setWindowIcon(QIcon(icono_ventana_impuestos))
+>>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
         self.ventana_impuestos.show()
 
     def mostrar_ventana_facturas(self):
         self.ventana_facturas = VentanaFacturas()
+<<<<<<< HEAD
         self.ventana_facturas.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\Facturas.ico"))
+=======
+        #self.ventana_facturas.setWindowIcon(QtGui.QIcon("Facturas.ico"))
+        icono_ventana_facturas = get_resource_path('iconos/Facturas.ico')
+        self.ventana_facturas.setWindowIcon(QIcon(icono_ventana_facturas))
+>>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
         self.ventana_facturas.show()
 
 
