@@ -304,15 +304,10 @@ class VentanaPrincipal(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Estación de Servicio')
-<<<<<<< HEAD
-        self.setGeometry(200, 200, 350, 250)
-        self.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\Fuel_station.ico"))
-=======
         self.setGeometry(200, 200, 300, 330)
         #self.setWindowIcon(QtGui.QIcon("Fuel_station.ico"))
         icono_ventana_principal = get_resource_path('iconos/Fuel_station.ico')
         self.setWindowIcon(QIcon(icono_ventana_principal))
->>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -352,24 +347,16 @@ class VentanaPrincipal(QMainWindow):
 
     def mostrar_ventana_impuestos(self):
         self.ventana_impuestos = VentanaImpuestos()
-<<<<<<< HEAD
-        self.ventana_impuestos.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\impuestos.ico"))
-=======
         #self.ventana_impuestos.setWindowIcon(QtGui.QIcon("impuestos.ico"))
         icono_ventana_impuestos = get_resource_path('iconos/impuestos.ico')
         self.ventana_impuestos.setWindowIcon(QIcon(icono_ventana_impuestos))
->>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
         self.ventana_impuestos.show()
 
     def mostrar_ventana_facturas(self):
         self.ventana_facturas = VentanaFacturas()
-<<<<<<< HEAD
-        self.ventana_facturas.setWindowIcon(QIcon("C:\GONZA\Proyectos\Proyectos\Combustible_Estacion_Servicio\Facturas.ico"))
-=======
         #self.ventana_facturas.setWindowIcon(QtGui.QIcon("Facturas.ico"))
         icono_ventana_facturas = get_resource_path('iconos/Facturas.ico')
         self.ventana_facturas.setWindowIcon(QIcon(icono_ventana_facturas))
->>>>>>> d4c08501a0a3796b73548889581d0b3eec2d3fc7
         self.ventana_facturas.show()
 
 
